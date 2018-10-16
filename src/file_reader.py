@@ -16,6 +16,11 @@ class FileReader(object):
             for line in infile:
                 line = line.strip()
                 split = line.split(';')
+
+                if (len(split) != 3):
+                    log.fail("every line has to follow the format username;email;forbidden")
+                    sys.exit(1)
+                
                 usernames.append(split[0])
                 emails.append(split[1])
                 forbidden.append(split[2])
