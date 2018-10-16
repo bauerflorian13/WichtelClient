@@ -5,6 +5,7 @@ import itertools
 import random
 from mail import Mail
 from config import Config
+import sys
 
 def find_allowed_permutations(users):
     print("ALLOWED MATCHES: ")
@@ -39,6 +40,7 @@ def find_allowed_permutations(users):
     return allowed_perms
 
 def main():
+    conf = Config()
     users = []
 
     for name in ["u1", "u2", "u3"]:
@@ -50,17 +52,24 @@ def main():
     
     allowed_perms = find_allowed_permutations(users)
     
+    if len(allowed_perms) < 1:
+        print("No allowed perms found.")
+        sys.exit(1)
+
     rnd = random.randint(0, len(allowed_perms) - 1)
 
     chosen_perm = allowed_perms[rnd]
 
-    mail = Mail(Config())
-
     print("CHOSEN PERM")
     for user, match in zip(users, chosen_perm):
         print("{} -> {}".format(user.name, match.name))
-        mail.send_mail(user.email, "Wichteln 2018", "Hallo {}, \r\ndein Wichtelpartner ist {}.\r\nViel Spaß,\r\ndein Wichtelmagic System\r\n".format(user.name, match.name))
-    mail.quit()
+    
+    if conf.mail_enabled:
+        mail = Mail(conf)
+        for user, match in zip(users, chosen_perm):
+            mail.send_mail(user.email, conf.mail_subject, "Hallo {}, \r\ndein Wichtelpartner ist {}.\r\nViel Spaß,\r\ndein Wichtelmagic System\r\n".format(user.name, match.name))
+        mail.quit()
+        print("mails sent")
 
 if __name__ == "__main__":
     main()
