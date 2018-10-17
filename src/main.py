@@ -43,6 +43,43 @@ def find_allowed_permutations(users):
     
     return allowed_perms
 
+def generate_permutation(users):
+    # init local variables
+    generated_pairs = []
+    current_unmatched_users = users
+    current_unmatched_partners = users
+
+    # match until there are no more unmatched user
+    while len(current_unmatched_users) > 0 and len(current_unmatched_partners) > 0:
+        if(len(current_unmatched_users) != len(current_unmatched_partners)):
+            log.fail("The number of unmatched users and partners is not the same!")
+            return
+
+        rnd = random.randint(0, len(current_unmatched_users) - 1)
+        current_user = current_umatched_users[rnd]
+        current_user_possible_partners = current_unmatched_partners
+
+        # remove all impossible partners
+        for forbidden in current_user.forbidden:
+            list(filter(lambda a: a != forbidden, current_user_possible_partners))
+    
+        # no possible partner
+        if len(current_user_possible_partners):
+            # do not fail here, but implement some clever code, which goes a step back and avoid this case in the future
+            pass
+
+        # generate pair 
+        rnd = random.randint(0, len(current_user_possible_partners) - 1)
+        current_partner = current_user_possible_partners[rnd]
+        pair = (current_user, current_partner)
+        generated_pairs = []
+
+        # remove current user and current_partner
+        list(filter(lambda a: a != current_user, current_unmatched_users))
+        list(filter(lambda a: a != current_partner, current_possible_partners))
+
+    return generated_pairs
+
 def main():
     conf = Config()
     users = []
@@ -54,15 +91,17 @@ def main():
     for user in users:
         log.info("name: {} email: {} forbidden: {}".format(user.name, user.email, [u.name for u in user.forbidden]))
 
-    allowed_perms = find_allowed_permutations(users)
+    allowed_perms = generate_permutation(users)
     
     if len(allowed_perms) < 1:
         log.fail("No allowed perms found.")
         sys.exit(1)
 
-    rnd = random.randint(0, len(allowed_perms) - 1)
+#    rnd = random.randint(0, len(allowed_perms) - 1)
 
-    chosen_perm = allowed_perms[rnd]
+#    chosen_perm = allowed_perms[rnd]
+    
+    chosen_perm = allowed_perms
 
     log.header("CHOSEN PERM")
     for user, match in zip(users, chosen_perm):
