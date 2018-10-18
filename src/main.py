@@ -11,37 +11,39 @@ from log import Log
 
 log = Log()
 
-def find_allowed_permutations(users):
-    log.header("ALLOWED MATCHES: ")
-    for user in users:
-        others = [u for u in users if not user.is_forbidden(u)]
-        log.info("{}: {}".format(user.name, [o.name for o in others]))
+# breadth-first-search
+def bfs(users):
+    return bfs_rec(users, users, [])
 
-    # create all options
-    perms = list(itertools.permutations(users))
+def bfs_rec(unmatched_left, unmatched_right, pairs):
+    if len(unmatched_left) != len(unmatched_right):
+        log.fail('unmachted_left and unmatched_right are not the same size. cannot find pefect matching')
+        sys.exit(1)
+    
+    # recursion end
+    if len(unmatched_left) == 0 and len(unmatched_right) == 0:
+        return [pairs]
+    
+    new_unmatched_left = unmatched_left.copy()
+    
+    # get unmatched user
+    user = new_unmatched_left.pop()
 
-    # filter
-    allowed_perms = []
-    for perm in perms:
-        #print(perm)
-        perm_allowed = True
+    # get allowed matches from unmatched_right
+    allowed_matches = [u for u in unmatched_right if not user.is_forbidden(u)]
+
+    # form all pairs and go on with recursion
+    perfect_matchings = []
+    for am in allowed_matches:
+        new_pairs = pairs.copy()
+        new_pairs.append((user, am))
         
-        for user, match in zip(users, perm):
-            if user.is_forbidden(match):
-                perm_allowed = False
-        
-        if perm_allowed:
-            allowed_perms.append(perm)
-    
-    log.header("ALLOWED PERMS")
-    i = 1
-    for perm in allowed_perms:
-        log.info("Permutation {}".format(i))
-        i += 1
-        for user, match in zip(users, perm):
-            log.info("{} -> {}".format(user.name, match.name))
-    
-    return allowed_perms
+        new_unmatched_right = unmatched_right.copy()
+        new_unmatched_right.remove(am)
+
+        perfect_matchings += bfs_rec(new_unmatched_left, new_unmatched_right, new_pairs)
+
+    return perfect_matchings
 
 def main():
     conf = Config()
@@ -54,23 +56,26 @@ def main():
     for user in users:
         log.info("name: {} email: {} forbidden: {}".format(user.name, user.email, [u.name for u in user.forbidden]))
 
-    allowed_perms = find_allowed_permutations(users)
-    
-    if len(allowed_perms) < 1:
-        log.fail("No allowed perms found.")
+    perfect_matchings = bfs(users)
+
+    if len(perfect_matchings) < 1:
+        log.fail("No perfect matching found.")
         sys.exit(1)
+    
+    log.header("PERFECT MATCHINGS")
+    log.info("Found {} perfect matchings.".format(len(perfect_matchings)))
+    
+    rnd = random.randint(0, len(perfect_matchings) - 1)
 
-    rnd = random.randint(0, len(allowed_perms) - 1)
+    chosen_perf_matching = perfect_matchings[rnd]
 
-    chosen_perm = allowed_perms[rnd]
-
-    log.header("CHOSEN PERM")
-    for user, match in zip(users, chosen_perm):
+    log.header("CHOSEN PERFECT MATCHING")
+    for user, match in chosen_perf_matching:
         log.info("{} -> {}".format(user.name, match.name))
     
     if conf.mail_enabled:
         mail = Mail(conf)
-        for user, match in zip(users, chosen_perm):
+        for user, match in zip(users, chosen_perf_matching):
             mail.send_mail(user.email, conf.mail_subject, "Hallo {}, \r\ndein Wichtelpartner ist {}.\r\nViel Spaß,\r\ndein Wichtelmagic System\r\n".format(user.name, match.name))
         mail.quit()
         log.info("mails sent")
