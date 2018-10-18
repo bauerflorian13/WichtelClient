@@ -14,6 +14,9 @@ class FileReader(object):
         forbidden = []
         with open(filename, 'r', encoding='utf-8') as infile:
             for line in infile:
+                if line.startswith('#'):
+                    continue
+                
                 line = line.strip()
                 split = line.split(';')
 
@@ -46,4 +49,4 @@ class FileReader(object):
                         log.fail("check input file: {} is an unknown username".format(err))
                         sys.exit(1)
         
-        return users.values()
+        return list(users.values())
