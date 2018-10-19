@@ -45,40 +45,71 @@ def find_allowed_permutations(users):
 
 def generate_permutation(users):
     # init local variables
-    generated_pairs = []
-    current_unmatched_users = users
-    current_unmatched_partners = users
+    log.header("START PAIR GENERATION")
+    generated_pairs = gen_perms_recursive(users, users)
 
-    # match until there are no more unmatched user
-    while len(current_unmatched_users) > 0 and len(current_unmatched_partners) > 0:
-        if(len(current_unmatched_users) != len(current_unmatched_partners)):
-            log.fail("The number of unmatched users and partners is not the same!")
-            return
-
-        rnd = random.randint(0, len(current_unmatched_users) - 1)
-        current_user = current_umatched_users[rnd]
-        current_user_possible_partners = current_unmatched_partners
-
-        # remove all impossible partners
-        for forbidden in current_user.forbidden:
-            list(filter(lambda a: a != forbidden, current_user_possible_partners))
-    
-        # no possible partner
-        if len(current_user_possible_partners):
-            # do not fail here, but implement some clever code, which goes a step back and avoid this case in the future
-            pass
-
-        # generate pair 
-        rnd = random.randint(0, len(current_user_possible_partners) - 1)
-        current_partner = current_user_possible_partners[rnd]
-        pair = (current_user, current_partner)
-        generated_pairs = []
-
-        # remove current user and current_partner
-        list(filter(lambda a: a != current_user, current_unmatched_users))
-        list(filter(lambda a: a != current_partner, current_possible_partners))
+    if len(generated_pairs) == 0 and len(users) > 0:
+        log.fail("There was no matching possible!")
+        sys.exit(1)
 
     return generated_pairs
+
+def gen_perms_recursive(unmatched_users, unmatched_partners):
+    # check if there are more unmatched users
+    if len(unmatched_users) == 0 and len(unmatched_partners) == 0:
+        return []
+
+    if len(unmatched_users) == 0 or len(unmatched_partners) == 0:
+        log.fail("The number of unmatched users or partners is null but not both!")
+        sys.exit(1)
+
+    if len(unmatched_users) != len(unmatched_partners):
+        log.fail("The number of unmatched users and partners is not equal!")
+        sys.exit(1)
+
+
+    # for random selection shuffle the user list before
+    random.shuffle(unmatched_users)
+
+    for current_user in unmatched_users:
+        # remove forbidden partners
+        possible_partners = [u for u in unmatched_partners]
+
+        for forbidden in current_user.forbidden:
+            if forbidden in possible_partners:
+                possible_partners.remove(forbidden)
+
+        if len(possible_partners) == 0:
+            log.info("No matching possible for '{}' in this part of the tree.".format(current_user))
+            continue
+
+        # for double randomnes shuffle partner list as well:P
+        random.shuffle(possible_partners)
+        for current_partner in possible_partners:
+            print("Current partner {}".format(current_partner.name))
+            current_pair = (current_user, current_partner)
+
+            if len(unmatched_users) == 1:
+                log.info("Matched as first pair this pair: '{} -> {}'".format(current_user.name, current_partner.name))
+                return [current_pair]
+
+            else:
+                new_unmatched_users = [u for u in unmatched_users if u != current_user]
+                new_unmatched_partners = [u for u in unmatched_partners if u != current_partner]
+                gen_pairs = gen_perms_recursive(new_unmatched_users, new_unmatched_partners)
+
+                if len(gen_pairs) == 0:
+                    continue
+
+                else:
+                    log.info("Matched as pair no. {} this pair: '{} -> {}'".format(len(gen_pairs), current_user.name, current_partner.name))
+                    gen_pairs.insert(0, current_pair)
+                    return gen_pairs
+
+
+    # in case there was no possible matching return an empty []
+    return []
+
 
 def main():
     conf = Config()
@@ -88,10 +119,12 @@ def main():
     users = fr.read('in.txt')
 
     log.header("USERS FROM FILE")
+    users_list = []
     for user in users:
         log.info("name: {} email: {} forbidden: {}".format(user.name, user.email, [u.name for u in user.forbidden]))
+        users_list.append(user)
 
-    allowed_perms = generate_permutation(users)
+    allowed_perms = generate_permutation(users_list)
     
     if len(allowed_perms) < 1:
         log.fail("No allowed perms found.")
@@ -104,9 +137,11 @@ def main():
     chosen_perm = allowed_perms
 
     log.header("CHOSEN PERM")
-    for user, match in zip(users, chosen_perm):
-        log.info("{} -> {}".format(user.name, match.name))
-    
+#    for user, match in zip(users, chosen_perm):
+#        log.info("{} -> {}".format(user.name, match.name))
+    for (paira,pairb) in chosen_perm:
+        log.info("{} -> {}".format(paira.name, pairb.name))
+
     if conf.mail_enabled:
         mail = Mail(conf)
         for user, match in zip(users, chosen_perm):
