@@ -1,6 +1,8 @@
 config.py
 in.txt
 
+.DS_Store
+
 # Compiled class file
 *.class
 

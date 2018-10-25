@@ -12,10 +12,10 @@ from log import Log
 log = Log()
 
 # breadth-first-search
-def bfs(users):
-    return bfs_rec(users, users, [])
+def bfs(users, all = False):
+    return bfs_rec(users, users, [], all)
 
-def bfs_rec(unmatched_left, unmatched_right, pairs):
+def bfs_rec(unmatched_left, unmatched_right, pairs, all):
     if len(unmatched_left) != len(unmatched_right):
         log.fail('unmachted_left and unmatched_right are not the same size. cannot find pefect matching')
         sys.exit(1)
@@ -32,6 +32,11 @@ def bfs_rec(unmatched_left, unmatched_right, pairs):
     # get allowed matches from unmatched_right
     allowed_matches = [u for u in unmatched_right if not user.is_forbidden(u)]
 
+    # randomize if not generating all matchings
+    if not all:
+        random.shuffle(new_unmatched_left)
+        random.shuffle(allowed_matches)
+
     # form all pairs and go on with recursion
     perfect_matchings = []
     for am in allowed_matches:
@@ -41,7 +46,10 @@ def bfs_rec(unmatched_left, unmatched_right, pairs):
         new_unmatched_right = unmatched_right.copy()
         new_unmatched_right.remove(am)
 
-        perfect_matchings += bfs_rec(new_unmatched_left, new_unmatched_right, new_pairs)
+        perfect_matchings += bfs_rec(new_unmatched_left, new_unmatched_right, new_pairs, all)
+
+        if (not all) and len(perfect_matchings) > 0:
+            break
 
     return perfect_matchings
 
