@@ -83,7 +83,7 @@ def main():
     
     if conf.mail_enabled:
         mail = Mail(conf)
-        for user, match in zip(users, chosen_perf_matching):
+        for user, match in chosen_perf_matching:
             mail.send_mail(user.email, conf.mail_subject, "Hallo {}, \r\ndein Wichtelpartner ist {}.\r\nViel Spaß,\r\ndein Wichtelmagic System\r\n".format(user.name, match.name))
         mail.quit()
         log.info("mails sent")
