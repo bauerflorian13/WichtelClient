@@ -76,8 +76,16 @@ def main():
         log.fail("No allowed perms found ('Normales Wichteln').")
         sys.exit(1)
 
+    log.header("PERFECT MATCHINGS NORMAL")
+    log.info("Found {} perfect matchings for normal wichteln.".format(len(perms_normal)))
+    
+    rnd = random.randint(0, len(perms_normal) - 1)
+
+    perm_normal = perms_normal[rnd]
+
+
     # forbid the matches from "Normales Wichteln"
-    for (user,match) in perms_normal:
+    for (user,match) in perm_normal:
         user.forbid(match)
 
     perms_schrott = bfs(users_list)
@@ -85,13 +93,20 @@ def main():
     if len(perms_schrott) < 1:
         log.fail("No allowed perms found ('Schrott-Wichteln').")
         sys.exit(1)
+    
+    log.header("PERFECT MATCHINGS SCHROTT")
+    log.info("Found {} perfect matchings for schritt wichteln.".format(len(perms_schrott)))
+    
+    rnd = random.randint(0, len(perms_schrott) - 1)
+
+    perm_schrott = perms_schrott[rnd]
 
     log.header("CHOSEN PERM Normal")
-    for (paira,pairb) in perms_normal:
+    for (paira,pairb) in perm_normal:
         log.info("{} -> {}".format(paira.name, pairb.name))
 
     log.header("CHOSEN PERM Schrott")
-    for (paira,pairb) in perms_schrott:
+    for (paira,pairb) in perm_schrott:
         log.info("{} -> {}".format(paira.name, pairb.name))
 
     if conf.mail_enabled:
@@ -99,7 +114,7 @@ def main():
         for user in users_list:
             mail.send_mail(user.email, conf.mail_subject, "Hallo {}, \r\ndein normaler Wichtelpartner ist {}.\r\n "
                                                                   "Desweiteren ist dein Schrottwichtelpartner {}.\r\n"
-                                                                  "Viel Spaß,\r\ndein Wichtelmagic System\r\n".format(user.name, get_matching(perms_normal, user), get_matching(perms_schrott, user)))
+                                                                  "Viel Spaß,\r\ndein Wichtelmagic System\r\n".format(user.name, get_matching(perm_normal, user), get_matching(perm_schrott, user)))
         mail.quit()
         log.info("mails sent")
 
