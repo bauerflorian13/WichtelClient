@@ -53,73 +53,6 @@ def bfs_rec(unmatched_left, unmatched_right, pairs, all):
 
     return perfect_matchings
 
-def generate_permutation(users):
-    # init local variables
-    log.header("START PAIR GENERATION")
-    generated_pairs = gen_perms_recursive(users, users)
-
-    if len(generated_pairs) == 0 and len(users) > 0:
-        log.fail("There was no matching possible!")
-        sys.exit(1)
-
-    return generated_pairs
-
-def gen_perms_recursive(unmatched_users, unmatched_partners):
-    # check if there are more unmatched users
-    if len(unmatched_users) == 0 and len(unmatched_partners) == 0:
-        return []
-
-    if len(unmatched_users) == 0 or len(unmatched_partners) == 0:
-        log.fail("The number of unmatched users or partners is null but not both!")
-        sys.exit(1)
-
-    if len(unmatched_users) != len(unmatched_partners):
-        log.fail("The number of unmatched users and partners is not equal!")
-        sys.exit(1)
-
-
-    # for random selection shuffle the user list before
-    random.shuffle(unmatched_users)
-
-    for current_user in unmatched_users:
-        # remove forbidden partners
-        possible_partners = [u for u in unmatched_partners]
-
-        for forbidden in current_user.forbidden:
-            if forbidden in possible_partners:
-                possible_partners.remove(forbidden)
-
-        if len(possible_partners) == 0:
-            log.info("No matching possible for '{}' in this part of the tree.".format(current_user))
-            continue
-
-        # for double randomnes shuffle partner list as well:P
-        random.shuffle(possible_partners)
-        for current_partner in possible_partners:
-            print("Current partner {}".format(current_partner.name))
-            current_pair = (current_user, current_partner)
-
-            if len(unmatched_users) == 1:
-                log.info("Matched as first pair this pair: '{} -> {}'".format(current_user.name, current_partner.name))
-                return [current_pair]
-
-            else:
-                new_unmatched_users = [u for u in unmatched_users if u != current_user]
-                new_unmatched_partners = [u for u in unmatched_partners if u != current_partner]
-                gen_pairs = gen_perms_recursive(new_unmatched_users, new_unmatched_partners)
-
-                if len(gen_pairs) == 0:
-                    continue
-
-                else:
-                    log.info("Matched as pair no. {} this pair: '{} -> {}'".format(len(gen_pairs), current_user.name, current_partner.name))
-                    gen_pairs.insert(0, current_pair)
-                    return gen_pairs
-
-
-    # in case there was no possible matching return an empty []
-    return []
-
 def get_matching(list, user):
     return filter(lambda usr,match: usr == user, list)[0]
 
@@ -137,7 +70,7 @@ def main():
         users_list.append(user)
 
     # "Normales Wichteln" and "Schrottwichteln"
-    perms_normal = generate_permutation(users_list)
+    perms_normal = bfs(users_list)
 
     if len(perms_normal) < 1:
         log.fail("No allowed perms found ('Normales Wichteln').")
@@ -147,7 +80,7 @@ def main():
     for user,match in perms_normal:
         user.forbid(match)
 
-    perms_schrott = generate_permutation(users_list)
+    perms_schrott = bfs(users_list)
 
     if len(perms_schrott) < 1:
         log.fail("No allowed perms found ('Schrott-Wichteln').")
