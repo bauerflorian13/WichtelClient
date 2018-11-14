@@ -77,7 +77,7 @@ def main():
         sys.exit(1)
 
     # forbid the matches from "Normales Wichteln"
-    for user,match in perms_normal:
+    for (user,match) in perms_normal:
         user.forbid(match)
 
     perms_schrott = bfs(users_list)
