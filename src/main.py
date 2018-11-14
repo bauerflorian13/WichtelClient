@@ -124,28 +124,40 @@ def main():
         log.info("name: {} email: {} forbidden: {}".format(user.name, user.email, [u.name for u in user.forbidden]))
         users_list.append(user)
 
-    allowed_perms = generate_permutation(users_list)
-    
-    if len(allowed_perms) < 1:
-        log.fail("No allowed perms found.")
+    # "Normales Wichteln" and "Schrottwichteln"
+    allowed_perms_normal = generate_permutation(users_list)
+
+    if len(allowed_perms_normal) < 1:
+        log.fail("No allowed perms found ('Normales Wichteln').")
         sys.exit(1)
 
-#    rnd = random.randint(0, len(allowed_perms) - 1)
+    # forbid the matches from "Normales Wichteln"
+    for user,match in allowed_perms_normal:
+        user.forbid(match)
 
-#    chosen_perm = allowed_perms[rnd]
-    
-    chosen_perm = allowed_perms
+    allowed_perms_schrott = generate_permutation(users_list)
 
-    log.header("CHOSEN PERM")
-#    for user, match in zip(users, chosen_perm):
-#        log.info("{} -> {}".format(user.name, match.name))
-    for (paira,pairb) in chosen_perm:
+    if len(allowed_perms_schrott) < 1:
+        log.fail("No allowed perms found ('Schrott-Wichteln').")
+        sys.exit(1)
+
+    log.header("CHOSEN PERM Normal")
+    for (paira,pairb) in allowed_perms_normal:
+        log.info("{} -> {}".format(paira.name, pairb.name))
+
+    log.header("CHOSEN PERM Schrott")
+    for (paira,pairb) in allowed_perms_schrott:
         log.info("{} -> {}".format(paira.name, pairb.name))
 
     if conf.mail_enabled:
         mail = Mail(conf)
-        for user, match in zip(users, chosen_perm):
-            mail.send_mail(user.email, conf.mail_subject, "Hallo {}, \r\ndein Wichtelpartner ist {}.\r\nViel Spaß,\r\ndein Wichtelmagic System\r\n".format(user.name, match.name))
+        # TODO: remove this ugly second for loop
+        for user, match in allowed_perms_normal:
+            for user2, match2 in allowed_perms_schrott:
+                if user == user2:
+                    mail.send_mail(user.email, conf.mail_subject, "Hallo {}, \r\ndein normaler Wichtelpartner ist {}.\r\n "
+                                                                  "Desweiteren ist dein Schrottwichtelpartner {}.\r\n"
+                                                                  "Viel Spaß,\r\ndein Wichtelmagic System\r\n".format(user.name, match.name, match2.name))
         mail.quit()
         log.info("mails sent")
 
