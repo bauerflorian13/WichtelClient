@@ -110,6 +110,8 @@ def gen_perms_recursive(unmatched_users, unmatched_partners):
     # in case there was no possible matching return an empty []
     return []
 
+def get_matching(list, user):
+    return filter(lambda usr,match: usr == user, list)[0]
 
 def main():
     conf = Config()
@@ -125,39 +127,36 @@ def main():
         users_list.append(user)
 
     # "Normales Wichteln" and "Schrottwichteln"
-    allowed_perms_normal = generate_permutation(users_list)
+    perms_normal = generate_permutation(users_list)
 
-    if len(allowed_perms_normal) < 1:
+    if len(perms_normal) < 1:
         log.fail("No allowed perms found ('Normales Wichteln').")
         sys.exit(1)
 
     # forbid the matches from "Normales Wichteln"
-    for user,match in allowed_perms_normal:
+    for user,match in perms_normal:
         user.forbid(match)
 
-    allowed_perms_schrott = generate_permutation(users_list)
+    perms_schrott = generate_permutation(users_list)
 
-    if len(allowed_perms_schrott) < 1:
+    if len(perms_schrott) < 1:
         log.fail("No allowed perms found ('Schrott-Wichteln').")
         sys.exit(1)
 
     log.header("CHOSEN PERM Normal")
-    for (paira,pairb) in allowed_perms_normal:
+    for (paira,pairb) in perms_normal:
         log.info("{} -> {}".format(paira.name, pairb.name))
 
     log.header("CHOSEN PERM Schrott")
-    for (paira,pairb) in allowed_perms_schrott:
+    for (paira,pairb) in perms_schrott:
         log.info("{} -> {}".format(paira.name, pairb.name))
 
     if conf.mail_enabled:
         mail = Mail(conf)
-        # TODO: remove this ugly second for loop
-        for user, match in allowed_perms_normal:
-            for user2, match2 in allowed_perms_schrott:
-                if user == user2:
-                    mail.send_mail(user.email, conf.mail_subject, "Hallo {}, \r\ndein normaler Wichtelpartner ist {}.\r\n "
+        for user in users_list:
+            mail.send_mail(user.email, conf.mail_subject, "Hallo {}, \r\ndein normaler Wichtelpartner ist {}.\r\n "
                                                                   "Desweiteren ist dein Schrottwichtelpartner {}.\r\n"
-                                                                  "Viel Spaß,\r\ndein Wichtelmagic System\r\n".format(user.name, match.name, match2.name))
+                                                                  "Viel Spaß,\r\ndein Wichtelmagic System\r\n".format(user.name, get_matching(perms_normal, user), get_matching(perms_schrott, user)))
         mail.quit()
         log.info("mails sent")
 
