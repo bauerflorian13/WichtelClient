@@ -54,7 +54,8 @@ def bfs_rec(unmatched_left, unmatched_right, pairs, all):
     return perfect_matchings
 
 def get_matching(list, user):
-    return filter(lambda usr,match: usr == user, list)[0]
+    #return filter(lambda usr,match: usr == user, list)[0]
+    return [match for (u, match) in list if u == user][0]
 
 def main():
     conf = Config()
@@ -114,7 +115,7 @@ def main():
         for user in users_list:
             mail.send_mail(user.email, conf.mail_subject, "Hallo {}, \r\ndein normaler Wichtelpartner ist {}.\r\n "
                                                                   "Desweiteren ist dein Schrottwichtelpartner {}.\r\n"
-                                                                  "Viel Spaß,\r\ndein Wichtelmagic System\r\n".format(user.name, get_matching(perm_normal, user), get_matching(perm_schrott, user)))
+                                                                  "Viel Spaß,\r\ndein Wichtelmagic System\r\n".format(user.name, get_matching(perm_normal, user).name, get_matching(perm_schrott, user).name))
         mail.quit()
         log.info("mails sent")
 
